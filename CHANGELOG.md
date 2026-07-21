@@ -1,5 +1,14 @@
 # 更新记录
 
+## 1.0.0 - 2026-07-21
+
+- 发布 Evidence → Research → Insights → Brand Brief 完整公开作品版本。
+- 固定 Apple 中国、Anker 德国、Dyson 中国三个 Benchmark，共 25 条具体 Evidence。
+- 记录 18 条 Insights 的去留结果：11 条可直接保留、6 条需修改、1 条建议删除。
+- 完成 DeepSeek、OpenAI、Mock Provider 解耦，以及 JSON 解析、Zod 校验和失败不覆盖。
+- 上线 Vercel 只读 Benchmark Demo：不执行实时 AI，所有写接口返回 403。
+- 补齐产品、架构、质量、作品集、简历、面试、演示脚本和 Release Notes。
+
 ## Sprint 5 Benchmark Dataset v2
 
 - 固定 Apple 中国、Anker 德国、Dyson 中国三个回归案例。
