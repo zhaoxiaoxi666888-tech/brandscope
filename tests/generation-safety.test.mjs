@@ -1,0 +1,3 @@
+import test from "node:test";import assert from "node:assert/strict";import fs from "node:fs";
+test("研究失败发生在事务替换旧数据之前",()=>{const source=fs.readFileSync("app/api/projects/[id]/research/route.ts","utf8");const generation=source.indexOf("researchService.generate");const transaction=source.indexOf("prisma.$transaction");const deletion=source.indexOf("tx.research.deleteMany");assert.ok(generation>0&&transaction>generation&&deletion>transaction);});
+test("研究与简报生成具备服务端重复请求锁",()=>{for(const file of ["app/api/projects/[id]/research/route.ts","app/api/projects/[id]/brief/route.ts"]){const source=fs.readFileSync(file,"utf8");assert.match(source,/acquireGenerationLock/);assert.match(source,/status:409/);}});

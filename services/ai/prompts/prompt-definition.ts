@@ -1,0 +1,2 @@
+export type PromptDefinition={version:string;role:string;input:string[];task:string;outputStructure:string;constraints:string[];prohibitions:string[]};
+export function renderPrompt(definition:PromptDefinition,input:string){return [`版本：${definition.version}`,`角色：${definition.role}`,`输入字段：${definition.input.join("、")}`,`任务：${definition.task}`,`输出结构：${definition.outputStructure}`,`约束：${definition.constraints.join("；")}`,`禁止事项：${definition.prohibitions.join("；")}`,"项目输入：",input].join("\n");}

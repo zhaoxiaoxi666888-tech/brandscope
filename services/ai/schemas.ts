@@ -1,0 +1,6 @@
+import { z } from "zod";
+export const sourceTypeSchema=z.enum(["OFFICIAL","INSTITUTION","MEDIA","COMMERCE","COMMUNITY","OTHER"]);
+const moduleSchema=z.enum(["BRAND_CONTEXT","MARKET_SIGNALS","TARGET_AUDIENCE","CUSTOMER_PAINS","COMPETITOR_POSITIONING","OPPORTUNITIES_RISKS"]);
+export const researchResponseSchema=z.object({modules:z.array(z.object({module:moduleSchema,title:z.string().min(8),summary:z.string().min(40),keyFacts:z.string().min(12),marketSignals:z.string().min(8),inference:z.string().min(12),marketingMeaning:z.string().min(12),limitations:z.string(),sourceIds:z.array(z.string().regex(/^EV-[A-F0-9]{10}$/)).min(1)}).strict()).length(6).refine((modules)=>new Set(modules.map(item=>item.module)).size===6,"六个研究模块必须唯一且完整")}).strict();
+export const insightResponseSchema=z.object({insights:z.array(z.object({type:z.enum(["CORE","PAIN","OPPORTUNITY","RISK"]),content:z.string().min(15),evidence:z.string().min(10),researchModules:z.array(moduleSchema).min(1)}).strict()).min(4).max(8)}).strict();
+export const briefResponseSchema=z.object({background:z.string().min(20),marketingObjective:z.string().min(15),positioning:z.string().min(15),persona:z.string().min(15),coreInsights:z.string().min(15),communication:z.string().min(8),contentSuggestions:z.string().min(15),channels:z.string().min(10),kpis:z.string().min(10)}).strict();

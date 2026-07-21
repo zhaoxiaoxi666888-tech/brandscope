@@ -1,0 +1,2 @@
+import test from "node:test"; import assert from "node:assert/strict"; import { evaluateOutput } from "../services/ai/evaluation/evaluate"; import { evaluationCases } from "../services/ai/evaluation/fixtures";
+test("三个固定案例通过最小 AI 质量门槛",()=>{assert.equal(evaluationCases.length,3);for(const item of evaluationCases){const report=evaluateOutput(item);assert.equal(report.passed,true,`${item.projectName}: ${JSON.stringify(report.dimensions)}`)}});

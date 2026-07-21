@@ -1,0 +1,107 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Project {
+  id                String     @id @default(cuid())
+  name              String
+  brandName         String
+  category          String
+  targetMarket      String
+  competitors       String
+  researchObjective String
+  status            String     @default("DRAFT")
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  research          Research[]
+  sources           Source[]
+  insights          Insight[]
+  brief             Brief?
+}
+
+model Research {
+  id               String   @id @default(cuid())
+  projectId        String
+  module           String
+  title            String
+  summary          String
+  inference        String   @default("")
+  keyFacts         String   @default("")
+  marketSignals    String   @default("")
+  marketingMeaning String   @default("")
+  limitations      String   @default("")
+  status           String   @default("READY")
+  position         Int
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  project          Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  sources          Source[]
+
+  @@unique([projectId, module])
+  @@index([projectId, position])
+}
+
+model Source {
+  id               String     @id @default(cuid())
+  projectId        String
+  title            String
+  url              String     @default("")
+  publisher        String     @default("")
+  publishedAt      DateTime?
+  summary          String
+  content          String     @default("")
+  retrievedAt      DateTime   @default(now())
+  sourceType       String     @default("OTHER")
+  qualityGrade     String     @default("D")
+  enabled          Boolean    @default(true)
+  extractionStatus String     @default("MANUAL")
+  fingerprint      String
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  project          Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  research         Research[]
+
+  @@unique([projectId, fingerprint])
+  @@index([projectId, enabled])
+}
+
+model Insight {
+  id              String   @id @default(cuid())
+  projectId       String
+  type            String
+  content         String
+  evidence        String   @default("")
+  sourceIds       String   @default("[]")
+  researchModules String   @default("[]")
+  isInference     Boolean  @default(true)
+  status          String   @default("SUGGESTED")
+  position        Int
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, position])
+}
+
+model Brief {
+  id                 String   @id @default(cuid())
+  projectId          String   @unique
+  background         String
+  marketingObjective String
+  positioning        String
+  persona            String
+  coreInsights       String
+  communication      String
+  contentSuggestions String
+  channels           String
+  kpis               String
+  markdown           String
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  project            Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
