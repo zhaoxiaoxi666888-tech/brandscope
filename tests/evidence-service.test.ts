@@ -4,7 +4,7 @@ import type { Project } from "@prisma/client";
 import { EvidenceService } from "../services/evidence/evidence-service";
 import type { SearchProvider } from "../services/search/types";
 
-const project:Project={id:"apple",name:"Apple 中国研究",brandName:"Apple",category:"消费电子",targetMarket:"中国",competitors:"华为、小米",researchObjective:"验证品牌生态价值",status:"DRAFT",createdAt:new Date(),updatedAt:new Date()};
+const project:Project={id:"apple",name:"Apple 中国研究",brandName:"Apple",category:"消费电子",targetMarket:"中国",competitors:"华为、小米",researchObjective:"验证品牌生态价值",status:"DRAFT",ownerId:"test-user",createdAt:new Date(),updatedAt:new Date()};
 const make=(index:number,type:"OFFICIAL"|"MEDIA"="MEDIA")=>({title:`资料 ${index}`,url:`https://${type==="OFFICIAL"?"apple.com":"news.test"}/page-${index}?utm_source=test`,publisher:type==="OFFICIAL"?"Apple":"新闻媒体",publishedAt:`2026-07-${String(index+1).padStart(2,"0")}`,retrievedAt:new Date().toISOString(),sourceType:type,summary:`搜索摘要 ${index}`});
 
 test("EvidenceService 去重、优先官方来源并执行类型配额",async()=>{

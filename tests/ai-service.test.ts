@@ -7,7 +7,7 @@ import { MockLLMProvider } from "../services/ai/providers/mock-llm-provider";
 const project: Project = {
   id:"test-project", name:"Northline 日本市场研究", brandName:"Northline", category:"户外服装",
   targetMarket:"日本", competitors:"Patagonia、Goldwin", researchObjective:"验证可修复户外服装的品牌定位。",
-  status:"DRAFT", createdAt:new Date(), updatedAt:new Date(),
+  status:"DRAFT", ownerId:"test-user", createdAt:new Date(), updatedAt:new Date(),
 };
 
 test("MockLLMProvider keeps generated research consistent with the project",async()=>{

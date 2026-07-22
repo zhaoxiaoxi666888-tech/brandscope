@@ -1,8 +1,8 @@
-# Vercel 部署指南
+# Vercel + Supabase 部署指南
 
 ## 部署策略
 
-Vercel 只部署只读 Benchmark Demo。`vercel.json` 已设置 `PUBLIC_DEMO_MODE=true`，公开访问不需要 SQLite 持久化、DeepSeek Key 或 Search Key。所有写接口在服务端返回 403。
+Vercel 部署公开可用 MVP。Benchmark 始终公开只读；登录用户的私人项目保存到 Supabase PostgreSQL，真实模型调用仅发生在服务端。
 
 ## Dashboard 操作
 
@@ -10,9 +10,10 @@ Vercel 只部署只读 Benchmark Demo。`vercel.json` 已设置 `PUBLIC_DEMO_MOD
 2. 打开 Vercel Dashboard，点击 **Add New… → Project**。
 3. 在 **Import Git Repository** 选择 BrandScope 仓库。
 4. Framework Preset 保持 **Next.js**，Root Directory 保持仓库根目录。
-5. 不添加 DeepSeek、OpenAI 或 Brave 密钥。
-6. 确认 `PUBLIC_DEMO_MODE=true`；它已写入 `vercel.json`。
+5. 配置 `DATABASE_URL`、`DIRECT_URL`、`NEXT_PUBLIC_SUPABASE_URL`、`NEXT_PUBLIC_SUPABASE_ANON_KEY`、`AI_PROVIDER=deepseek`、`DEEPSEEK_API_KEY`、`DEEPSEEK_MODEL`、`DEEPSEEK_BASE_URL`、`SEARCH_PROVIDER=manual` 与 `PUBLIC_DAILY_AI_CALL_LIMIT`。
+6. 执行 `pnpm db:deploy` 初始化 PostgreSQL Schema；不要在生产执行 Seed。
 7. 点击 **Deploy**。
-8. 部署完成后依次打开首页、三个 Benchmark 项目和 Markdown 下载。
+8. 在 Supabase Auth URL Configuration 中，将 Site URL 设为生产地址并加入本地开发 Redirect URL。
+9. 部署后验证未登录 Benchmark、邮箱登录、私人项目隔离、URL 安全检查与三段生成限额。
 
-如果在 Vercel Dashboard 修改环境变量，需要重新部署才会应用新值。
+`.env`、`.env.local`、数据库文件和 API Key 不进入 Git。Vercel 环境变量更新后必须重新部署才会生效。

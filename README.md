@@ -2,17 +2,17 @@
 
 > 面向品牌营销、海外营销和 GTM 从业者的证据驱动 AI 品牌研究工作台。
 
-[![在线体验](https://img.shields.io/badge/在线体验-只读_Benchmark_Demo-111111)](https://brandscope-eta.vercel.app)
+[![在线体验](https://img.shields.io/badge/在线体验-Public_MVP-111111)](https://brandscope-eta.vercel.app)
 
 ![BrandScope 首页](public/screenshots/home.png)
 
 **Evidence → Research → Insights → Brand Brief**
 
-BrandScope 把分散的公开资料整理为可追溯的研究、可由人审阅的洞察，以及可继续修改的品牌营销简报。公开 Demo 无需登录或 API Key，可直接查看三个完整案例；它不执行实时 AI，也不冒充实时市场监控。
+BrandScope 把分散的公开资料整理为可追溯的研究、可由人审阅的洞察，以及可继续修改的品牌营销简报。无需登录即可查看三个完整 Benchmark；邮箱登录后可创建私人项目，提交公开网页并运行一次真实 AI 研究闭环。
 
 | 固定 Benchmark | Evidence | AI 与质量机制 | 公开体验 |
 |---|---:|---|---|
-| Apple 中国、Anker 德国、Dyson 中国 | 25 条具体文章或报告 | DeepSeek 真实调用、结构化输出与 Zod 校验 | 只读 Demo、34+ 自动测试 |
+| Apple 中国、Anker 德国、Dyson 中国 | 25 条具体文章或报告 | DeepSeek 真实调用、结构化输出与 Zod 校验 | 公开只读 Benchmark + 私人真实研究 |
 
 质量验收结果：**Apple B-、Anker B+、Dyson B+；18 条 Insights 中 11 条可直接保留。** 三份 Brief 均达到“修改后可以讨论”，不等同于未经人工核验即可发布。
 
@@ -43,12 +43,14 @@ flowchart LR
 
 ## 核心功能
 
-- 项目创建、查看、编辑和删除；SQLite 本地持久化
+- 邮箱注册与登录；用户只能访问自己的研究项目
+- 项目创建、查看、编辑和删除；托管 PostgreSQL 持久化
 - 品牌背景、市场信号、目标用户、用户痛点、竞品定位、机会与风险六模块研究
 - 洞察编辑、确认、删除和排序，最终决策保留给用户
 - 仅使用已确认洞察生成九章节简报
 - 简报编辑、复制和 Markdown 下载
-- 公开部署的三案例只读 Benchmark Demo
+- 三个公开只读 Benchmark；真实项目对创建者私有
+- 每日项目、单项目生成次数与全站 AI 调用预算保护
 
 ## Evidence Layer
 
@@ -64,7 +66,7 @@ flowchart LR
   S --> L["LLMProvider"]
   L --> D["DeepSeek / OpenAI / Mock"]
   D --> Z["JSON 解析 + Zod 校验"]
-  Z --> P["Prisma / SQLite"]
+  Z --> P["Prisma / PostgreSQL"]
 ```
 
 页面和业务流程不依赖具体模型。无效结构不会写入数据库，生成失败也不会覆盖上一版成功数据。
@@ -72,7 +74,7 @@ flowchart LR
 ## 技术栈
 
 - Next.js 16、React 19、TypeScript strict、Tailwind CSS 4
-- Prisma 6、SQLite、Zod
+- Prisma 6、Supabase PostgreSQL / Auth、Zod
 - DeepSeek Chat Completions、OpenAI Responses API、Mock Provider
 - Cheerio、Node Test Runner、ESLint
 
@@ -102,16 +104,17 @@ flowchart LR
 
 ## 本地启动
 
-需要 Node.js 22.13+ 与 pnpm。
+需要 Node.js 22.13+、pnpm，以及一个 PostgreSQL 数据库。复制环境变量模板后，填写 Supabase 的连接串、Project URL 与 anon key：
 
 ```bash
 pnpm install
 cp .env.example .env
-pnpm setup
+pnpm db:generate
+pnpm db:deploy
 pnpm dev
 ```
 
-访问 `http://localhost:3000`。默认 Mock 模式无需 API Key。
+数据库脚本会安全读取被 Git 忽略的 `.env.local`。访问 `http://localhost:3000`。默认 Mock 模式无需模型 API Key；登录与私人项目仍需 Supabase 配置。旧版 SQLite 数据不会自动上传，迁移前请保留本地数据库备份；v1.1 使用全新的 PostgreSQL Schema，三个 Benchmark 继续由版本化快照提供。
 
 ## DeepSeek 配置
 
@@ -124,14 +127,14 @@ DEEPSEEK_MODEL="deepseek-v4-flash"
 DEEPSEEK_BASE_URL="https://api.deepseek.com"
 ```
 
-## 公开 Demo 说明
+## 公开 MVP 说明
 
 [打开只读 Benchmark Demo](https://brandscope-eta.vercel.app)
 
-- 数据来自三个固定 Benchmark 快照，不依赖线上 SQLite
-- 无需登录、API Key 或等待模型调用
-- 禁止创建、编辑、删除、重新生成和保存，写接口统一返回 HTTP 403
-- 真实 AI 研究仅在本地开发模式开放
+- 三个 Benchmark 来自版本化快照，无需登录、无需等待模型调用，并保持只读
+- 登录后可创建私人项目；每位用户每天最多 2 个项目，每项目最多 8 个 URL
+- 单项目最多发起 1 次 Research、1 次 Insights、1 次 Brief；达到全站日预算后停止真实调用
+- 真实项目与 AI 调用记录持久化到 PostgreSQL；不会静默回退 Mock
 
 ## 安全边界
 
@@ -142,15 +145,15 @@ DEEPSEEK_BASE_URL="https://api.deepseek.com"
 
 ## 当前限制
 
-- SQLite 适合本地单用户模式，不用于公开部署写入
+- 邮箱确认邮件依赖 Supabase Auth；公开体验不提供找回密码、团队或付费能力
 - 付费墙、反爬和动态渲染页面可能无法提取
 - Evidence 分级与模型结论仍需人工核验
-- 公开 Demo 不执行实时搜索或付费模型请求
+- 不进行自动搜索；真实研究只读取用户提交且成功提取的网页
 
 ## Roadmap
 
 - 持续使用三个固定 Benchmark 回归 Evidence 与内容质量
-- 验证真实使用需求后，再评估最小云持久化方案
+- 通过固定 Benchmark 与匿名化使用指标持续验证真实使用价值
 - 在证据质量稳定前，不引入 RAG、多 Agent、团队或计费系统
 
 ## 项目目录

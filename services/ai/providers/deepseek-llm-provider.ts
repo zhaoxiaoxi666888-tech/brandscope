@@ -4,6 +4,7 @@ import { briefToMarkdown } from "@/app/lib/brief-markdown";
 import type { LLMProvider } from "../llm-provider";
 import { deepSeekConfig } from "../config";
 import { briefResponseSchema, insightResponseSchema, researchResponseSchema } from "../schemas";
+import { recordAiMetric } from "../metrics";
 
 type ResearchResponse=z.infer<typeof researchResponseSchema>;
 type InsightResponse=z.infer<typeof insightResponseSchema>;
@@ -19,7 +20,7 @@ const contracts={
  brief:`{"background":"字符串","marketingObjective":"字符串","positioning":"字符串","persona":"字符串","coreInsights":"字符串","communication":"字符串","contentSuggestions":"字符串","channels":"字符串","kpis":"字符串"}`,
 } as const;
 
-const defaultRecorder:MetricsRecorder=(metrics)=>console.info("[AI_METRIC]",JSON.stringify(metrics));
+const defaultRecorder:MetricsRecorder=(metrics)=>recordAiMetric(metrics);
 const defaultSleep=(milliseconds:number)=>new Promise(resolve=>setTimeout(resolve,milliseconds));
 const isRetryable=(error:unknown)=>error instanceof OpenAI.APIConnectionError||error instanceof OpenAI.RateLimitError||(error instanceof OpenAI.APIError&&Boolean(error.status&&(error.status===408||error.status===409||error.status===429||error.status>=500)));
 

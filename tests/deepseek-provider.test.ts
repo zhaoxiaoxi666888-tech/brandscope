@@ -4,7 +4,7 @@ import OpenAI from "openai";
 import type { Project } from "@prisma/client";
 import { DeepSeekLLMProvider } from "../services/ai/providers/deepseek-llm-provider";
 
-const project:Project={id:"p",name:"品牌研究",brandName:"测试品牌",category:"消费电子",targetMarket:"德国",competitors:"竞品甲",researchObjective:"比较品牌进入目标市场的机会与风险",status:"DRAFT",createdAt:new Date(),updatedAt:new Date()};
+const project:Project={id:"p",name:"品牌研究",brandName:"测试品牌",category:"消费电子",targetMarket:"德国",competitors:"竞品甲",researchObjective:"比较品牌进入目标市场的机会与风险",status:"DRAFT",ownerId:"test-user",createdAt:new Date(),updatedAt:new Date()};
 const source={sourceId:"EV-ABCDEF1234",title:"官方资料",url:"https://example.com/source",publisher:"品牌官网",publishedAt:null,retrievedAt:new Date().toISOString(),sourceType:"OFFICIAL" as const,summary:"公开资料摘要",content:"用于测试的完整网页正文材料。"};
 const modules=["BRAND_CONTEXT","MARKET_SIGNALS","TARGET_AUDIENCE","CUSTOMER_PAINS","COMPETITOR_POSITIONING","OPPORTUNITIES_RISKS"] as const;
 const validResearch={modules:modules.map((module,index)=>({module,title:`研究模块标题需要足够完整 ${index}`,summary:"这是一段经过来源约束的详细研究内容，用于验证结构校验能够接受完整且具体的中文研究输出。",keyFacts:"网页正文明确支持的关键事实。",marketSignals:"材料呈现的市场信号。",inference:"这是基于上述公开资料形成的有限推断，需要用户继续核验。",marketingMeaning:"品牌营销应优先验证这一判断。",limitations:"当前材料范围有限。",sourceIds:[source.sourceId]}))};

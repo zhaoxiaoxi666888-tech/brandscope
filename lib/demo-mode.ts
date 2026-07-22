@@ -2,10 +2,10 @@ import { createHash } from "node:crypto";
 import { demoProjects } from "@/prisma/demo-data";
 import { benchmarkDatasetV2 } from "@/services/evidence/benchmark-dataset-v2";
 
-export const isPublicDemo=()=>process.env.PUBLIC_DEMO_MODE==="true"||process.env.VERCEL==="1";
-export const readOnlyResponse=()=>Response.json({error:"公开 Demo 为只读模式。真实 AI 研究功能当前仅在本地开发模式开放。"},{status:403});
+export const readOnlyResponse=()=>Response.json({error:"Benchmark 案例为公开只读内容，不能修改或重新生成。"},{status:403});
 
 const benchmarkIds=new Set(["apple-china","anker-germany","dyson-china"]);
+export const isBenchmarkProject=(id:string)=>benchmarkIds.has(id);
 const now="2026-07-21T00:00:00.000Z";
 const sourceId=(url:string)=>`EV-${createHash("sha256").update(url).digest("hex").slice(0,10).toUpperCase()}`;
 const withoutModuleIndex=<T extends {moduleIndex:number}>(source:T)=>{const copy:Partial<T>={...source};delete copy.moduleIndex;return copy;};

@@ -13,5 +13,5 @@ test("公开 Demo 项目包含 Research、Insights、Brief 和来源",()=>{
 });
 
 test("只读阻断返回明确的 403",async()=>{
- const response=readOnlyResponse();assert.equal(response.status,403);assert.match((await response.json()).error,/只读模式/);
+ const response=readOnlyResponse();assert.equal(response.status,403);assert.match((await response.json()).error,/公开只读/);
 });

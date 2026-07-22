@@ -5,7 +5,7 @@ import { BraveSearchProvider } from "../services/search/providers/brave-search-p
 import { PublicWebSearchProvider } from "../services/search/providers/public-web-search-provider";
 import { buildSearchQueries } from "../services/search/queries";
 
-const project:Project={id:"p",name:"Apple 中国",brandName:"Apple",category:"消费电子",targetMarket:"中国",competitors:"华为、小米",researchObjective:"研究生态价值",status:"DRAFT",createdAt:new Date(),updatedAt:new Date()};
+const project:Project={id:"p",name:"Apple 中国",brandName:"Apple",category:"消费电子",targetMarket:"中国",competitors:"华为、小米",researchObjective:"研究生态价值",status:"DRAFT",ownerId:"test-user",createdAt:new Date(),updatedAt:new Date()};
 
 test("检索查询包含品牌、市场、品类与竞品",()=>{const queries=buildSearchQueries(project);assert.equal(queries.length,7);assert.match(queries.join(" "),/Apple/);assert.match(queries.join(" "),/中国/);assert.match(queries.join(" "),/华为/);});
 

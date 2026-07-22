@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Project {
@@ -16,12 +17,45 @@ model Project {
   competitors       String
   researchObjective String
   status            String     @default("DRAFT")
+  ownerId           String
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt
   research          Research[]
   sources           Source[]
   insights          Insight[]
   brief             Brief?
+  generationRuns    GenerationRun[]
+
+  @@index([ownerId, updatedAt])
+  @@index([ownerId, createdAt])
+}
+
+model GenerationRun {
+  id            String   @id @default(cuid())
+  projectId     String
+  ownerId       String
+  operation     String
+  status        String   @default("PENDING")
+  provider      String
+  model         String
+  inputTokens   Int      @default(0)
+  outputTokens  Int      @default(0)
+  elapsedMs     Int      @default(0)
+  failureReason String   @default("")
+  createdAt     DateTime @default(now())
+  completedAt   DateTime?
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, operation])
+  @@index([ownerId, createdAt])
+  @@index([status, createdAt])
+}
+
+model DailyBudget {
+  date      String   @id
+  usedCalls Int      @default(0)
+  callLimit Int
+  updatedAt DateTime @updatedAt
 }
 
 model Research {

@@ -1,5 +1,13 @@
 # 更新记录
 
+## 1.1.0 - 2026-07-21
+
+- 使用 Supabase PostgreSQL 持久化私人项目，并加入最小邮箱注册与登录。
+- Benchmark 保持公开只读；私人项目通过用户 ID 在服务端隔离。
+- 公开用户可提交最多 8 个 Evidence URL，并完成 Research、Insights 与 Brief 的真实 DeepSeek 工作流。
+- 加入每日项目限额、单项目幂等生成、全站日调用预算与 Token、耗时、失败记录。
+- Evidence URL 沿用 SSRF 防护、正文清洗与上下文限长；达到预算时停止调用且不回退 Mock。
+
 ## 1.0.0 - 2026-07-21
 
 - 发布 Evidence → Research → Insights → Brand Brief 完整公开作品版本。

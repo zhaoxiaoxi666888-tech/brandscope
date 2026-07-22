@@ -1,7 +1,4 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "env": {
-    "PUBLIC_DEMO_MODE": "true",
-    "DATABASE_URL": "file:/tmp/brandscope.db"
-  }
+  "framework": "nextjs"
 }

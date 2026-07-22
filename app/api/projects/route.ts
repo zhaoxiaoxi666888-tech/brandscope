@@ -1,19 +1,24 @@
 import { prisma } from "@/lib/prisma";
-import { validateProjectInput } from "@/lib/project-input";
-import { demoProjectList, isPublicDemo, readOnlyResponse } from "@/lib/demo-mode";
+import { sanitizeUserText,validateProjectInput } from "@/lib/project-input";
+import { demoProjectList } from "@/lib/demo-mode";
+import { authErrorResponse,requireUser } from "@/lib/auth";
+import { createProjectWithinLimit } from "@/lib/usage-limits";
 
-export async function GET() {
-  if(isPublicDemo())return Response.json(demoProjectList());
-  const projects=await prisma.project.findMany({orderBy:{updatedAt:"desc"},include:{_count:{select:{research:true,insights:true}},brief:{select:{id:true}}}});
-  return Response.json(projects);
+export async function GET(request:Request) {
+  const benchmarks=demoProjectList();
+  if(!request.headers.get("authorization"))return Response.json(benchmarks);
+  try{
+    const {userId}=await requireUser(request);
+    const projects=await prisma.project.findMany({where:{ownerId:userId},orderBy:{updatedAt:"desc"},include:{_count:{select:{research:true,insights:true}},brief:{select:{id:true}}}});
+    return Response.json([...projects.map(item=>({...item,readOnly:false})),...benchmarks]);
+  }catch(error){return authErrorResponse(error)||Response.json({error:"项目列表加载失败。"},{status:500});}
 }
 
 export async function POST(request:Request) {
-  if(isPublicDemo())return readOnlyResponse();
   try {
-    const body=await request.json();
-    const validationError=validateProjectInput(body);if(validationError)return Response.json({error:validationError},{status:400});
-    const project=await prisma.project.create({data:{name:body.name.trim(),brandName:body.brandName.trim(),category:body.category.trim(),targetMarket:body.targetMarket.trim(),competitors:String(body.competitors||"").trim(),researchObjective:body.researchObjective.trim()}});
+    const {userId}=await requireUser(request);
+    const body=await request.json();const validationError=validateProjectInput(body);if(validationError)return Response.json({error:validationError},{status:400});
+    const project=await createProjectWithinLimit({ownerId:userId,name:sanitizeUserText(body.name),brandName:sanitizeUserText(body.brandName),category:sanitizeUserText(body.category),targetMarket:sanitizeUserText(body.targetMarket),competitors:sanitizeUserText(String(body.competitors||"")),researchObjective:sanitizeUserText(body.researchObjective)});
     return Response.json(project,{status:201});
-  } catch { return Response.json({error:"创建项目失败，请稍后重试。"},{status:500}); }
+  } catch(error) {return authErrorResponse(error)||Response.json({error:error instanceof Error?error.message:"创建项目失败，请稍后重试。"},{status:500});}
 }
