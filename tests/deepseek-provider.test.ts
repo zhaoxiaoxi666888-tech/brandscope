@@ -32,6 +32,14 @@ test("DeepSeekProvider 对结构错误最多执行一次定向修复",async()=>{
  assert.equal(fake.calls,2);assert.equal(result.length,6);
 });
 
+test("DeepSeekProvider 对资料不足造成的空字段执行一次确定性边界修复",async()=>{
+ const incomplete={modules:validResearch.modules.map(item=>({...item,marketSignals:"",inference:"",marketingMeaning:"",sourceIds:[]}))};
+ const fake=fakeClient([JSON.stringify(incomplete),JSON.stringify(incomplete)]);
+ const provider=new DeepSeekLLMProvider("test",{client:fake.client,record:()=>{}});
+ const result=await provider.generateResearch({project,sources:[source],prompt:"生成品牌研究 JSON"});
+ assert.equal(fake.calls,2);assert.equal(result.length,6);assert.match(result[0].inference,/资料不足/);assert.equal(result[0].sources[0].url,source.url);
+});
+
 test("DeepSeekProvider 拒绝两次均不符合 Schema 的内容",async()=>{
  const fake=fakeClient([JSON.stringify({modules:[]}),JSON.stringify({modules:[]})]);
  const provider=new DeepSeekLLMProvider("test",{client:fake.client,record:()=>{}});

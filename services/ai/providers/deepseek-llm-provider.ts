@@ -25,6 +25,17 @@ const defaultSleep=(milliseconds:number)=>new Promise(resolve=>setTimeout(resolv
 const isRetryable=(error:unknown)=>error instanceof OpenAI.APIConnectionError||error instanceof OpenAI.RateLimitError||(error instanceof OpenAI.APIError&&Boolean(error.status&&(error.status===408||error.status===409||error.status===429||error.status>=500)));
 
 function parseJson(raw:string){return JSON.parse(raw.trim()) as unknown;}
+const insufficient="当前资料不足以得出确定结论。";
+function normalizeResearchPayload(value:unknown,allowedSourceIds:string[]){
+ if(!value||typeof value!=="object"||!("modules" in value)||!Array.isArray(value.modules))return value;
+ const text=(candidate:unknown,min:number,fallback:string)=>typeof candidate==="string"&&candidate.trim().length>=min?candidate.trim():fallback;
+ return{modules:value.modules.map(candidate=>{
+  if(!candidate||typeof candidate!=="object")return candidate;
+  const moduleData=candidate as Record<string,unknown>;
+  const requested=Array.isArray(moduleData.sourceIds)?moduleData.sourceIds.filter((id):id is string=>typeof id==="string"&&allowedSourceIds.includes(id)):[];
+  return{module:moduleData.module,title:text(moduleData.title,8,"资料边界与待验证问题"),summary:text(moduleData.summary,40,`${insufficient}本模块仅记录当前材料边界，建议补充相关官方或权威来源后再判断。`),keyFacts:text(moduleData.keyFacts,12,`${insufficient}暂无可验证的关键事实。`),marketSignals:text(moduleData.marketSignals,8,`${insufficient}暂无充分市场信号。`),inference:text(moduleData.inference,12,`${insufficient}不进行额外推断。`),marketingMeaning:text(moduleData.marketingMeaning,12,`${insufficient}暂不建议据此制定品牌行动。`),limitations:typeof moduleData.limitations==="string"?moduleData.limitations:insufficient,sourceIds:[...new Set(requested.length?requested:allowedSourceIds.slice(0,1))]};
+ })};
+}
 
 export class DeepSeekLLMProvider implements LLMProvider{
  private readonly client:OpenAI;
@@ -49,7 +60,7 @@ export class DeepSeekLLMProvider implements LLMProvider{
   }
  }
 
- private async parse<T>(operation:Operation,prompt:string,schema:z.ZodType<T>,contract:string){
+ private async parse<T>(operation:Operation,prompt:string,schema:z.ZodType<T>,contract:string,normalize?:(value:unknown)=>unknown){
   const started=Date.now();const usage:Usage={inputTokens:0,outputTokens:0,totalTokens:0,retryCount:0,repairCount:0};let success=false;
   const system=`你是 BrandScope 的结构化分析服务。只输出一个合法 JSON 对象，不要 Markdown、解释或代码围栏。JSON 必须严格符合：${contract}`;
   try{
@@ -60,7 +71,7 @@ export class DeepSeekLLMProvider implements LLMProvider{
    const issues=first&&!first.success?first.error.issues.slice(0,8).map(item=>`${item.path.join(".")}: ${item.message}`).join("；"):"返回内容不是合法 JSON 对象";
    const repairPrompt=`以下内容未通过结构校验。只修复 JSON 语法、字段类型和缺失字段，不增加输入中没有的事实。只返回修复后的 JSON 对象。\n校验要求：${contract}\n问题：${issues}\n待修复内容：${raw.slice(0,12000)}`;
    const repaired=await this.completion([{role:"system",content:system},{role:"user",content:repairPrompt}],usage);
-   let result:{success:true;data:T}|{success:false;error:z.ZodError};try{result=schema.safeParse(parseJson(repaired));}catch{throw new Error("schema_invalid");}
+   let result:{success:true;data:T}|{success:false;error:z.ZodError};try{const parsed=parseJson(repaired);result=schema.safeParse(parsed);if(!result.success&&normalize)result=schema.safeParse(normalize(parsed));}catch{throw new Error("schema_invalid");}
    if(!result.success)throw new Error("schema_invalid");success=true;return result.data;
   }catch(error){
    if(error instanceof OpenAI.AuthenticationError)throw new Error("DeepSeek API Key 无效，请检查服务端环境变量。");
@@ -76,7 +87,8 @@ export class DeepSeekLLMProvider implements LLMProvider{
  }
 
  async generateResearch(request:Parameters<LLMProvider["generateResearch"]>[0]){
-  const parsed=await this.parse<ResearchResponse>("research",request.prompt,researchResponseSchema,contracts.research);const byId=new Map(request.sources.map(item=>[item.sourceId,item]));
+  const allowedSourceIds=request.sources.map(item=>item.sourceId).filter((id):id is string=>Boolean(id));
+  const parsed=await this.parse<ResearchResponse>("research",request.prompt,researchResponseSchema,contracts.research,value=>normalizeResearchPayload(value,allowedSourceIds));const byId=new Map(request.sources.map(item=>[item.sourceId,item]));
   const modules=parsed.modules.map(module=>({...module,sources:module.sourceIds.map(id=>byId.get(id)).filter((item):item is NonNullable<typeof item>=>Boolean(item))}));
   if(modules.some(module=>module.sources.length===0))throw new Error("DeepSeek 未能为所有研究模块关联有效来源，请重试。");return modules;
  }
