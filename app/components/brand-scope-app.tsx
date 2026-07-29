@@ -10,9 +10,46 @@ import { ConfirmDialog, ErrorState, LoadingState } from "@/app/components/ui";
 import { apiFetch,getSupabaseBrowser } from "@/lib/supabase-browser";
 
 type View = "landing" | "projects" | "create" | "evidence" | "research" | "insights" | "brief" | "login";
-type BriefField = keyof Pick<BriefDTO, "background" | "marketingObjective" | "positioning" | "persona" | "coreInsights" | "communication" | "contentSuggestions" | "channels" | "kpis">;
+type BriefField = keyof Pick<BriefDTO, "background" | "marketingObjective" | "positioning" | "persona" | "coreInsights" | "communication" | "contentSuggestions" | "channels" | "kpis" | "gtmStrategy" | "userJourney" | "localizationPlan" | "northStarMetrics">;
+type BriefJsonField = keyof Pick<BriefDTO, "competitorMatrix" | "overseasChannels" | "kolStrategy" | "growthExperiments">;
+type BriefTextField = keyof Pick<BriefDTO, "pricingEconomics" | "userInterviewPlan">;
 
-const currentProjectId = () => typeof window === "undefined" ? "anker-germany" : window.location.pathname.split("/")[2] || "anker-germany";
+function GtmBlock({ label, field, kind, draft, setDraft, readOnly }: { label: string; field: BriefJsonField | BriefTextField; kind: "matrix" | "text"; draft: BriefDTO; setDraft: (next: BriefDTO) => void; readOnly: boolean }) {
+  const raw = (draft[field] as string) || (kind === "matrix" ? "[]" : "");
+  let rows: Array<Record<string, string>> = [];
+  let parseError = false;
+  if (kind === "matrix") {
+    try { const parsed = JSON.parse(raw); if (Array.isArray(parsed)) rows = parsed as Array<Record<string, string>>; } catch { parseError = true; }
+  }
+  const columns = rows.length ? Object.keys(rows[0]) : [];
+  return (
+    <section className="gtm-matrix">
+      <span>GTM</span>
+      <div>
+        <small>{label}{parseError && <em className="matrix-error"> · JSON 格式有误，请检查</em>}</small>
+        {kind === "matrix" && columns.length > 0 && (
+          <div className="matrix-preview">
+            <table>
+              <thead><tr>{columns.map((col) => <th key={col}>{col}</th>)}</tr></thead>
+              <tbody>{rows.map((row, index) => <tr key={index}>{columns.map((col) => <td key={col}>{row[col] ?? ""}</td>)}</tr>)}</tbody>
+            </table>
+          </div>
+        )}
+        {!readOnly && (
+          <textarea
+            className={kind === "matrix" ? "matrix-json" : ""}
+            rows={kind === "matrix" ? Math.max(3, rows.length + 2) : 5}
+            aria-label={label}
+            value={raw}
+            onChange={(event) => setDraft({ ...draft, [field]: event.target.value })}
+          />
+        )}
+      </div>
+    </section>
+  );
+}
+
+const currentProjectId = () => typeof window === "undefined" ? "oura-us" : window.location.pathname.split("/")[2] || "oura-us";
 const stageLabel=(status:string)=>status==="BRIEF_READY"?"简报完成":status==="INSIGHTS"?"洞察整理":status==="RESEARCHING"||status==="READY"?"研究中":"等待研究";
 const sourceTypeLabel:Record<string,string>={OFFICIAL:"官方资料",INSTITUTION:"机构资料",MEDIA:"媒体报道",COMMERCE:"电商与评价",COMMUNITY:"公开社区",OTHER:"其他信息来源"};
 
@@ -55,7 +92,7 @@ function Landing() {
     window.location.href = `/projects/new?${query.toString()}`;
   }
   const projectStage=(project:ProjectDTO)=>stageLabel(project.status);
-  const benchmarkProjects=[{id:"apple-china",label:"Apple 中国案例"},{id:"anker-germany",label:"Anker 德国案例"},{id:"dyson-china",label:"Dyson 中国案例"}];
+  const benchmarkProjects=[{id:"oura-us",label:"Oura 美国案例"},{id:"whoop-us",label:"Whoop 美国案例"},{id:"ultrahuman-in",label:"Ultrahuman 印度案例"}];
   return <main className="landing landing-simple">
     <nav className="topbar product-top"><Brand/><p>帮助品牌团队完成品牌研究、洞察分析和品牌营销简报。</p><div className="top-auth"><Link href="/projects">全部项目</Link><AuthControls/></div></nav>
     <section className="home-workspace">
@@ -263,13 +300,22 @@ function Insights() {
   </main></div>;
 }
 
-const briefSections: { field: BriefField; label: string }[] = [
+const legacyBriefSections: { field: BriefField; label: string }[] = [
   { field: "background", label: "项目背景" }, { field: "marketingObjective", label: "营销目标" },
   { field: "positioning", label: "品牌定位" }, { field: "persona", label: "目标用户" },
   { field: "coreInsights", label: "核心洞察" }, { field: "communication", label: "传播方向" },
   { field: "contentSuggestions", label: "内容建议" }, { field: "channels", label: "渠道建议" },
   { field: "kpis", label: "衡量指标" },
 ];
+
+const gtmBriefSections: { field: BriefField; label: string }[] = [
+  { field: "background", label: "项目背景" }, { field: "marketingObjective", label: "营销与增长目标" },
+  { field: "positioning", label: "品牌定位与价值主张" }, { field: "persona", label: "目标用户" },
+  { field: "coreInsights", label: "核心洞察" }, { field: "gtmStrategy", label: "GTM 进入策略（0/30/60/90 天）" },
+  { field: "userJourney", label: "用户旅程与转化漏斗" }, { field: "localizationPlan", label: "本地化运营" },
+  { field: "northStarMetrics", label: "北极星指标与漏斗指标" },
+];
+
 
 function Brief() {
   const { data, error, load, setData } = useProject();
@@ -292,9 +338,20 @@ function Brief() {
   if (error) return <ErrorState message={error} retry={load}/>;
   if (!data) return <LoadingState/>;
   if (!draft) return <div className="workspace"><Sidebar project={data} active="brief"/><main className="workspace-main"><div className="empty-card"><span>尚未生成简报</span><h2>使用已确认的洞察生成品牌营销简报。</h2><p>当前有 {data.insights.filter(item => item.status === "CONFIRMED").length} 条已确认洞察。生成后可以直接编辑每个章节。</p>{actionError&&<p className="action-error" role="alert">生成失败：{actionError}</p>}<button className="button dark" disabled={busy} onClick={generate}>{busy ? "正在生成品牌营销简报…" : "生成品牌营销简报 →"}</button></div></main></div>;
+  const hasGtm = Boolean(draft.gtmStrategy || draft.competitorMatrix || draft.userJourney || draft.overseasChannels || draft.kolStrategy || draft.localizationPlan || draft.northStarMetrics || draft.pricingEconomics || draft.growthExperiments || draft.userInterviewPlan);
+  const activeBriefSections = hasGtm ? gtmBriefSections : legacyBriefSections;
   return <div className="workspace"><Sidebar project={data} active="brief"/><main className="workspace-main brief-page">
-    <header className="brief-head"><div><span className="section-label">品牌营销简报</span><h1>{data.brandName}<br/><em>{draft.communication}</em></h1><p>{data.targetMarket} · 更新于 {new Date(draft.updatedAt).toLocaleDateString("zh-CN")} {data.readOnly?"· 公开只读 Demo":""}</p></div><div className="brief-actions"><button className="button light" onClick={copy}>{copied ? "已复制" : "复制内容"}</button><button className="button light" onClick={() => void download()}>导出 Markdown ↓</button>{!data.readOnly&&<button className="button dark" disabled={busy} onClick={save}>{busy ? "正在保存…" : saved ? "已保存" : "保存简报"}</button>}</div></header>
-    {actionError&&<p className="action-error" role="alert">{actionError}</p>}<article className="brief-document editable-brief">{briefSections.map((section, index) => <section key={section.field}><span>0{index + 1}</span><div><small>{section.label}</small><textarea readOnly={data.readOnly} rows={Math.max(2,Math.ceil(draft[section.field].length/56))} aria-label={section.label} value={draft[section.field]} onChange={event => { setSaved(false); setDraft({ ...draft, [section.field]: event.target.value }); }}/></div></section>)}</article>
+    <header className="brief-head"><div><span className="section-label">{hasGtm ? "品牌 GTM 与营销简报" : "品牌营销简报"}</span><h1>{data.brandName}<br/><em>{draft.positioning ? draft.positioning.slice(0, 28) : hasGtm ? "GTM 策略简报" : "营销策略简报"}</em></h1><p>{data.targetMarket} · 更新于 {new Date(draft.updatedAt).toLocaleDateString("zh-CN")} {data.readOnly?"· 公开只读 Demo":""}</p></div><div className="brief-actions"><button className="button light" onClick={copy}>{copied ? "已复制" : "复制内容"}</button><button className="button light" onClick={() => void download()}>导出 Markdown ↓</button>{!data.readOnly&&<button className="button dark" disabled={busy} onClick={save}>{busy ? "正在保存…" : saved ? "已保存" : "保存简报"}</button>}</div></header>
+    {actionError&&<p className="action-error" role="alert">{actionError}</p>}<article className="brief-document editable-brief">{activeBriefSections.map((section, index) => <section key={section.field}><span>0{index + 1}</span><div><small>{section.label}</small><textarea readOnly={data.readOnly} rows={Math.max(2,Math.ceil((draft[section.field] || "").length/56))} aria-label={section.label} value={draft[section.field] || ""} onChange={event => { setSaved(false); setDraft({ ...draft, [section.field]: event.target.value }); }}/></div></section>)}
+      {hasGtm&&<>
+      <GtmBlock label="竞品对比矩阵" field="competitorMatrix" kind="matrix" draft={draft} setDraft={(next) => { setSaved(false); setDraft(next); }} readOnly={Boolean(data.readOnly)} />
+      <GtmBlock label="海外渠道矩阵" field="overseasChannels" kind="matrix" draft={draft} setDraft={(next) => { setSaved(false); setDraft(next); }} readOnly={Boolean(data.readOnly)} />
+      <GtmBlock label="KOL / 达人策略" field="kolStrategy" kind="matrix" draft={draft} setDraft={(next) => { setSaved(false); setDraft(next); }} readOnly={Boolean(data.readOnly)} />
+      <GtmBlock label="定价与单位经济" field="pricingEconomics" kind="text" draft={draft} setDraft={(next) => { setSaved(false); setDraft(next); }} readOnly={Boolean(data.readOnly)} />
+      <GtmBlock label="上市前增长实验" field="growthExperiments" kind="matrix" draft={draft} setDraft={(next) => { setSaved(false); setDraft(next); }} readOnly={Boolean(data.readOnly)} />
+      <GtmBlock label="用户访谈与洞察验证（内容/产品反馈闭环）" field="userInterviewPlan" kind="text" draft={draft} setDraft={(next) => { setSaved(false); setDraft(next); }} readOnly={Boolean(data.readOnly)} />
+      </>}
+    </article>
   </main></div>;
 }
 

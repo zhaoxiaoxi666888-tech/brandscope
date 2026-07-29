@@ -2,12 +2,12 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { benchmarkDatasetV2 } from "../services/evidence/benchmark-dataset-v2";
 
-test("Benchmark v2 固定 Apple、Anker、Dyson 且每组至少 8 篇",()=>{
- assert.deepEqual(benchmarkDatasetV2.map(item=>item.brand),["Apple","Anker","Dyson"]);
+test("Benchmark v3 固定 Oura、Whoop、Ultrahuman 且每组至少 8 篇",()=>{
+ assert.deepEqual(benchmarkDatasetV2.map(item=>item.brand),["Oura","Whoop","Ultrahuman"]);
  for(const item of benchmarkDatasetV2)assert.ok(item.urls.length>=8,`${item.brand} 少于 8 篇`);
 });
 
-test("Benchmark v2 不把首页、搜索页或栏目页作为 Evidence",()=>{
+test("Benchmark v3 不把首页、搜索页或栏目页作为 Evidence",()=>{
  const forbidden=[
   /^https:\/\/(www\.)?apple\.com\/?$/,
   /investor\.apple\.com\/(sec-filings|investor-relations)\/default\.aspx/,
