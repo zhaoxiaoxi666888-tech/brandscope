@@ -1,43 +1,43 @@
 import type { BriefOutput, ResearchOutput } from "../services/ai/types";
 import { briefToMarkdown } from "../app/lib/brief-markdown";
+import benchmarkProjects from "./demo-data-v3.json";
 
-export type DemoInsight = { type:"CORE"|"PAIN"|"OPPORTUNITY"|"RISK"; content:string; status:"CONFIRMED"|"SUGGESTED" };
-export type DemoProject = { id:string; name:string; brandName:string; category:string; targetMarket:string; competitors:string; researchObjective:string; status:string; research:ResearchOutput[]; insights:DemoInsight[]; brief:BriefOutput };
-const modules=["BRAND_CONTEXT","MARKET_SIGNALS","TARGET_AUDIENCE","CUSTOMER_PAINS","COMPETITOR_POSITIONING","OPPORTUNITIES_RISKS"];
-const source=(slug:string,title:string,summary:string)=>({title:`演示内容｜${title}`,url:`https://example.com/brandscope-demo/${slug}`,publisher:"BrandScope 演示资料",publishedAt:"2026-06-01",retrievedAt:"2026-07-21T00:00:00.000Z",sourceType:"OTHER" as const,summary:`${summary} 本条为演示内容，不代表实时检索或事实背书。`});
-function studies(slug:string, rows:Array<[string,string,string]>):ResearchOutput[]{return rows.map(([title,summary,sourceTitle],i)=>({module:modules[i],title,summary,inference:"AI 推断：该判断基于当前演示资料整理，真实执行前需要进一步验证。",sources:[source(`${slug}-${i+1}`,sourceTitle,summary.slice(0,55))]}));}
-function brief(brand:string,value:Omit<BriefOutput,"markdown">):BriefOutput{return{...value,markdown:briefToMarkdown(brand,value)}}
-const commonInsights=(items:string[]):DemoInsight[]=>items.map((content,i)=>({type:(["CORE","CORE","PAIN","PAIN","OPPORTUNITY","OPPORTUNITY","RISK","RISK"] as const)[i],content,status:i%2===0?"CONFIRMED":"SUGGESTED"}));
+export type DemoInsight = {
+  type: "CORE" | "PAIN" | "OPPORTUNITY" | "RISK";
+  content: string;
+  status: "CONFIRMED" | "SUGGESTED";
+};
 
-export const demoProjects:DemoProject[]=[
- {id:"anker-germany",name:"安克创新｜德国消费电子市场研究",brandName:"安克创新",category:"消费电子与充电设备",targetMarket:"德国",competitors:"Belkin、UGREEN、Samsung",researchObjective:"明确德国市场中便携充电产品的优先用户、可信价值主张与内容切入方式。",status:"INSIGHTS",
- research:studies("anker",[
- ["从参数领先转向可靠的移动能源伙伴","安克需要把技术能力翻译为日常可靠性：出差、通勤与家庭多设备场景中，用户购买的不是更复杂的参数，而是少带一个充电器仍然安心。","品牌与产品组合观察"],
- ["理性消费让效率、寿命与合规说明更重要","德国用户购买前会比较兼容性、耐用性与售后承诺。市场支持以清晰证据解释效率，但不支持没有出处的性能数字。","消费电子选择信号"],
- ["优先服务跨设备、高频移动的人群","首批目标用户是经常差旅的专业人士、多设备家庭与混合办公人群。他们设备多、使用频率高且无法接受供电中断。","目标用户任务摘要"],
- ["兼容性不确定比功率不足更阻碍决策","用户难以判断线材、协议、接口和设备是否匹配，也担心高功率设备的发热与寿命。复杂命名放大比较成本。","购买障碍观察"],
- ["竞品差异必须落到用户能够感知的取舍","Belkin 强调生态可信，UGREEN 强调配置性价比；安克可用完整生态、清晰兼容说明和稳定售后降低决策风险。","竞品定位扫描"],
- ["机会是建立选择标准，风险是技术承诺失去证据","场景化指南可让品牌成为选择助手；同时要避免用演示数据支撑确定性承诺，并关注维修、回收与合规表达。","机会与风险评估"]]),
- insights:commonInsights(["德国用户对充电设备的核心期待不是参数最多，而是跨设备使用时更少出错、更容易判断。","安克应把工程能力转译为可理解的场景证据，而不是继续增加技术术语。","协议、接口与线材组合复杂，让用户无法快速确认一套方案是否兼容全部设备。","用户担心发热、寿命与售后，但普通商品页难以同时回答这些问题。","围绕差旅与混合办公建立“一套带走”的选择指南，可把产品组合转化为明确任务方案。","透明的兼容说明与售后路径可以成为规格之外的差异化资产。","如果内容继续以参数领先为主，安克会被拉回同质化比较，并削弱品牌溢价。","演示来源不能支持确定性性能数字，真实传播前必须补充官方与本地证据。"]),
- brief:brief("安克创新",{background:"安克创新希望在德国市场建立超越参数竞争的品牌认知。本简报基于演示研究内容。",marketingObjective:"让多设备用户把安克理解为更省心的移动能源方案，并验证场景化内容能否降低选择成本。",positioning:"面向不愿研究复杂协议的多设备用户，提供清晰兼容、稳定可靠的一体化充电选择。",persona:"经常差旅或混合办公，拥有多台设备，重视可靠性、寿命和售后透明度的专业用户。",coreInsights:"- 用户更需要跨设备使用的确定性。\n- 兼容说明影响购买信心。\n- 场景化指南可建立顾问角色。",communication:"一套带走，少一点充电焦虑。",contentSuggestions:"制作差旅装备清单、设备兼容路径、真实使用说明与取舍清晰的比较内容。",channels:"优先搜索型内容、消费电子评测与零售详情页，再由品牌自有内容承接。",kpis:"内容理解度、兼容指南完成率、有效产品比较行为、从指南到商品页的行动率。"})},
- {id:"dyson-china",name:"Dyson｜中国高端个护市场研究",brandName:"Dyson",category:"高端个护电器",targetMarket:"中国",competitors:"徕芬、ghd、松下",researchObjective:"寻找高端个护消费趋于理性时，戴森继续证明价值的沟通方向。",status:"BRIEF_READY",
- research:studies("dyson",[
- ["把工程传奇重新落到每天的造型结果","戴森需要让气流、温控与设计回到用户每天能感知的头发状态、造型效率与安心感。","品牌价值表达观察"],["高端消费从新奇崇拜转向价值复核","用户仍愿意为改善体验付费，但会认真比较使用频率、结果稳定性与售后体验。单一科技光环不足以完成说服。","高端个护市场信号"],["核心是重视形象但时间紧张的城市用户","目标用户需要在通勤前或重要场合快速得到稳定造型，也担心长期高温影响发质；愿意学习但不愿重复复杂步骤。","个护用户任务摘要"],["昂贵之外，更深的焦虑是不会用与效果不稳定","配件多、学习成本高和发质差异会造成预期落差。用户需要判断产品是否适合自己，以及如何复现内容效果。","用户痛点观察"],["本土效率与专业造型共同挤压技术叙事","徕芬强调效率和性价比，ghd 强调专业造型；戴森需要用不同发质的真实使用路径解释工程审美与护发体验。","竞品定位扫描"],["机会是成为个人造型教练，风险是溢价解释失效","按发质和场景提供教学可延长产品价值；若只展示理想效果或回避学习成本，会扩大购买后的落差。","机会与风险评估"]]),
- insights:commonInsights(["戴森的高端价值需要从“技术先进”转化为“不同发质也能稳定复现的日常结果”。","教学体验是产品价值的一部分，不应只在购买后由用户自行摸索。","用户担心高价购买后不会使用，或无法得到内容展示中的造型效果。","技术术语与配件数量增加理解负担，让用户难以选对产品组合。","按发质、时间与场景组织教程，可以让工程优势变成可重复的个人方法。","售前诊断与售后教学可以共同支撑溢价，而不只依赖新品发布。","若传播继续依赖精致但难复现的效果，用户评价会放大预期落差。","缺少真实验证时，不应对护发效果作确定性或医学化承诺。"]),
- brief:brief("Dyson",{background:"戴森需要在中国高端个护消费更理性的环境下，重新解释技术、体验与价格的关系。本案例为演示内容。",marketingObjective:"提升用户对日常价值的理解，让高端定位由可复现的造型体验和服务支撑。",positioning:"为追求效率与发质状态的城市用户，提供由工程技术支持、可学习且可复现的个人造型系统。",persona:"工作节奏快、重视专业形象，愿意为稳定体验投入，但会认真评估长期价值的城市职业用户。",coreInsights:"- 高端价值必须表现为可复现的日常结果。\n- 教学体验属于产品价值。\n- 使用支持降低高价决策风险。",communication:"让每一次造型，都更接近你想要的结果。",contentSuggestions:"建立按发质分类的短教程、五分钟通勤造型、真实学习曲线和配件选择说明。",channels:"以生活方式内容和搜索教程触达，再由门店体验、品牌站和售后内容完成验证。",kpis:"教程完成率、收藏与复访、体验预约意向、使用指导满意度、核心价值理解度。"})},
- {id:"popmart-uk",name:"泡泡玛特｜英国潮玩市场研究",brandName:"泡泡玛特",category:"潮流玩具与收藏品",targetMarket:"英国",competitors:"Funko、LEGO、Kidrobot",researchObjective:"评估中国原创 IP 在英国建立长期收藏关系的内容与渠道策略。",status:"RESEARCHING",
- research:studies("popmart",[
- ["从盲盒销售者走向原创角色文化的组织者","泡泡玛特不能只依赖稀缺机制，需要让角色性格、艺术家与收藏者表达共同构成品牌背景。","品牌与 IP 观察"],["收藏连接审美表达、社群参与与礼赠","英国潮玩与街头文化、设计零售和粉丝社群交叉。用户关注角色能否表达身份并进入共同话题。","英国收藏文化信号"],["优先用户是愿意解释收藏意义的人","核心人群包括年轻收藏者、设计文化爱好者和寻找有性格礼物的人；他们愿意分享，但并不都接受持续追逐隐藏款。","收藏者任务摘要"],["稀缺带来兴奋，也带来重复与真实性焦虑","抽取不确定、重复款处理、真假辨别和补货不透明会造成疲惫。长期关系需要给非重度玩家明确入口。","收藏体验痛点"],["原创艺术家与线下体验是差异入口","Funko 依赖大众授权，LEGO 强调创造；泡泡玛特可用原创角色与线下体验区分，但需避免只留下陌生 IP 与随机购买。","收藏品牌定位扫描"],["机会是本地文化共创，风险是热度替代关系","本地艺术家和设计零售空间可建立语境；过度依赖排队、稀缺和短期社媒热度，可能加剧疲劳。","机会与风险评估"]]),
- insights:commonInsights(["英国市场的长期机会来自角色文化与收藏者表达，而不只是盲盒的新奇感。","让用户理解艺术家与角色，比持续强调隐藏款更有利于建立品牌关系。","重复款、预算不可控和真假辨别会削弱轻度用户继续收藏的意愿。","陌生 IP 缺少进入语境，用户可能喜欢造型却无法理解收藏意义。","本地艺术家共创与设计零售空间可为中国原创 IP 建立可信的英国文化入口。","通过角色档案和收藏指南，可以服务不依赖稀缺刺激的新用户。","过度使用排队与限量传播，可能把短期热度转化为社群疲劳。","在缺少本地验证时，不应把社媒可见度等同于持续需求。"]),
- brief:brief("泡泡玛特",{background:"泡泡玛特计划评估原创 IP 在英国建立长期收藏关系的路径。本案例为演示内容。",marketingObjective:"帮助新用户理解角色与艺术家价值，并验证本地文化共创是否带来持续参与。",positioning:"为寻找个性表达与收藏社群的英国年轻文化用户，提供连接原创角色、艺术家与线下体验的收藏世界。",persona:"关注设计与流行文化，愿意购买有故事的收藏，但对过度稀缺和预算失控保持警惕的年轻用户。",coreInsights:"- 长期价值来自角色文化。\n- 本地语境降低陌生 IP 门槛。\n- 稀缺需要与友好体验平衡。",communication:"认识一个角色，也找到一种表达。",contentSuggestions:"推出角色入门档案、艺术家工作室内容、本地共创故事和轻度收藏指南。",channels:"以设计零售空间、文化活动和创作者内容建立语境，再由品牌门店与社群承接体验。",kpis:"角色内容完成率、收藏指南访问、线下活动参与、复访、非限量内容互动质量。"})}
-, {id:"apple-china",name:"Apple｜中国品牌生态研究",brandName:"Apple",category:"消费电子与数字服务",targetMarket:"中国",competitors:"华为、小米、Samsung",researchObjective:"理解成熟品牌在中国市场如何继续用生态体验、隐私价值与零售服务维持长期关系。",status:"BRIEF_READY",
- research:studies("apple",[
- ["品牌资产来自软硬件体验的一致性","Apple 的品牌价值不只来自单一设备，而来自产品设计、系统协同、零售服务与沟通方式共同形成的可预期体验。","品牌生态观察"],
- ["换机理性化使长期使用价值更重要","成熟消费电子市场中，用户更关注设备之间的协同、数据迁移、耐用性和服务体验。新品热度不能替代长期价值解释。","成熟市场信号"],
- ["核心用户在意效率，也在意迁移成本","目标用户包括多设备专业人士、创意工作者和家庭决策者。他们希望工具稳定协同，同时会认真评估价格与生态绑定。","目标用户任务摘要"],
- ["选择困难从买哪款转向是否值得留在生态","用户痛点包括不同型号差异难懂、旧设备处置、跨平台协作限制，以及隐私价值难以被具体感知。","用户决策障碍"],
- ["本土竞品以连接能力与场景覆盖增强竞争","华为和小米强化本土服务与多设备场景。Apple 需要用高完成度体验和可信服务解释差异，而不是只强调品牌地位。","竞品定位扫描"],
- ["机会在于解释长期关系，风险在于封闭感被放大","透明呈现迁移、隐私、以旧换新与跨设备工作流可增强信任；若回避限制或只依赖新品发布，会放大生态锁定质疑。","机会与风险评估"]]),
- insights:commonInsights(["Apple 在中国市场需要证明的不是单台设备更强，而是长期使用过程中生态体验更连贯。","隐私价值只有进入具体生活场景，才能从抽象承诺变成用户可理解的选择理由。","型号差异、迁移成本和跨平台限制让成熟用户的决策比首次购买更复杂。","用户希望生态协同带来效率，但也担心选择被长期绑定。","围绕真实跨设备任务展示完整工作流，可以让生态优势从功能清单变成体验证据。","以旧换新、数据迁移和零售支持可以共同构成长周期服务价值。","如果传播只围绕新品与身份感，理性换机用户会更难理解继续投入的理由。","演示研究不能支持对市场份额或用户偏好的确定性判断，真实执行前必须补充来源。"]),
- brief:brief("Apple",{background:"Apple 需要在中国成熟消费电子市场中继续解释生态体验的长期价值。本案例为 BrandScope 演示内容。",marketingObjective:"让目标用户理解跨设备体验、迁移支持与隐私设计如何共同降低长期使用成本。",positioning:"为重视效率、稳定与隐私的专业用户及家庭，提供软硬件和服务高度协同的长期数字体验。",persona:"同时使用手机、电脑与穿戴设备，关注效率和服务质量，也会理性评估价格、迁移成本与平台限制的成熟用户。",coreInsights:"- 长期价值来自生态体验的连贯性。\n- 迁移支持和零售服务影响继续留在生态的信心。\n- 真实任务比功能清单更能证明协同价值。",communication:"让每一台设备，都自然进入你的日常。",contentSuggestions:"展示跨设备完成创作、办公和家庭协作的完整路径，并清晰说明迁移、隐私与旧设备处理。",channels:"以品牌官网、零售体验和任务型内容完成解释，再由产品教育与售后内容承接长期关系。",kpis:"生态价值理解度、任务内容完成率、迁移服务咨询、零售体验反馈、长期服务满意度。"})}
-];
+export type GtmBriefFields = {
+  gtmStrategy: string;
+  competitorMatrix: string;
+  userJourney: string;
+  overseasChannels: string;
+  kolStrategy: string;
+  localizationPlan: string;
+  northStarMetrics: string;
+  pricingEconomics: string;
+  growthExperiments: string;
+  userInterviewPlan: string;
+};
+
+export type DemoProject = {
+  id: string;
+  name: string;
+  brandName: string;
+  category: string;
+  targetMarket: string;
+  competitors: string;
+  researchObjective: string;
+  status: string;
+  research: ResearchOutput[];
+  insights: DemoInsight[];
+  brief: BriefOutput & GtmBriefFields;
+};
+
+// Benchmark v3 是面向海外 GTM 面试展示的只读快照。
+// JSON 只保存结构化结果；来源由 benchmark-dataset-v3 独立管理，避免模型输出伪造 URL。
+export const demoProjects = (benchmarkProjects as unknown as DemoProject[]).map(project=>({
+  ...project,
+  brief:{...project.brief,markdown:briefToMarkdown(project.brandName,project.brief)},
+}));

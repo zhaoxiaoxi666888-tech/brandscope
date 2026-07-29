@@ -12,9 +12,9 @@ BrandScope 把分散的公开资料整理为可追溯的研究、可由人审阅
 
 | 固定 Benchmark | Evidence | AI 与质量机制 | 公开体验 |
 |---|---:|---|---|
-| Apple 中国、Anker 德国、Dyson 中国 | 25 条具体文章或报告 | DeepSeek 真实调用、结构化输出与 Zod 校验 | 公开只读 Benchmark + 私人真实研究 |
+| Oura 美国、Whoop 美国、Ultrahuman 印度 | 每组 8 条可核验资料 | DeepSeek 真实调用、结构化输出与 Zod 校验 | 公开只读 Benchmark + 私人真实研究 |
 
-质量验收结果：**Apple B-、Anker B+、Dyson B+；18 条 Insights 中 11 条可直接保留。** 三份 Brief 均达到“修改后可以讨论”，不等同于未经人工核验即可发布。
+公开 Benchmark 重点展示从 Evidence 到海外 GTM 决策简报的完整链路。所有策略数字均应在执行前建立业务基线并人工核验；产品定位是研究与决策初稿工具，不替代正式市场调研。
 
 ## 产品问题
 
@@ -47,7 +47,7 @@ flowchart LR
 - 项目创建、查看、编辑和删除；托管 PostgreSQL 持久化
 - 品牌背景、市场信号、目标用户、用户痛点、竞品定位、机会与风险六模块研究
 - 洞察编辑、确认、删除和排序，最终决策保留给用户
-- 仅使用已确认洞察生成九章节简报
+- 私人真实研究仅使用已确认洞察生成九章节品牌简报；公开 Benchmark 进一步展示进入节奏、竞品、用户旅程、渠道、KOL、本地化、指标、单位经济、增长实验与访谈验证
 - 简报编辑、复制和 Markdown 下载
 - 三个公开只读 Benchmark；真实项目对创建者私有
 - 每日项目、单项目生成次数与全站 AI 调用预算保护
@@ -80,25 +80,25 @@ flowchart LR
 
 ## Benchmark 方法
 
-固定 Apple 中国、Anker 德国、Dyson 中国三个案例做回归比较。每个案例使用至少 8 篇具体文章或报告，排除首页、联系页、搜索页和栏目页，逐项评价 Evidence、六个 Research 模块、Insight 去留和 Brief 可讨论程度。
+当前固定 Oura 美国、Whoop 美国、Ultrahuman 印度三个可穿戴品牌案例，覆盖成熟品类领导者、订阅型运动产品与新兴市场挑战者。每个案例关联 8 篇公开资料，逐项展示 Evidence、六个 Research 模块、Insight 审阅与 GTM Brief。
 
 详见 [Benchmark 说明](docs/benchmark.md) 与 [质量报告](docs/brand-quality-report-v2.md)。
 
 ## 质量评估
 
-| 案例 | Evidence | Research | 可直接保留 Insight | Brief |
+| 案例 | Evidence | Research | Insight | GTM Brief |
 |---|---:|---:|---:|---|
-| Apple｜中国 | 8 | 6/6 | 3/6 | B-，修改后可讨论 |
-| Anker｜德国 | 9 | 6/6 | 4/6 | B+，修改后可讨论 |
-| Dyson｜中国 | 8 | 6/6 | 4/6 | B+，修改后可讨论 |
+| Oura｜美国 | 8 | 6/6 | 8 条候选，含人工确认状态 | 完整决策初稿 |
+| Whoop｜美国 | 8 | 6/6 | 8 条候选，含人工确认状态 | 完整决策初稿 |
+| Ultrahuman｜印度 | 8 | 6/6 | 8 条候选，含人工确认状态 | 完整决策初稿 |
 
 ## 页面截图
 
-| 项目列表 | Apple Research | Apple Insights |
+| 项目列表 | Research 工作区 | Insights 决策区 |
 |---|---|---|
 | ![项目列表](public/screenshots/projects.png) | ![Apple Research](public/screenshots/apple-research.png) | ![Apple Insights](public/screenshots/apple-insights.png) |
 
-| Apple Brief | Anker Research | Dyson Brief |
+| GTM Brief | Research 来源 | Brief 导出 |
 |---|---|---|
 | ![Apple Brief](public/screenshots/apple-brief.png) | ![Anker Research](public/screenshots/anker-research.png) | ![Dyson Brief](public/screenshots/dyson-brief.png) |
 
