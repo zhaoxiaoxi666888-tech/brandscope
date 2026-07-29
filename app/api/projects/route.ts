@@ -1,13 +1,12 @@
-import { prisma } from "@/lib/prisma";
 import { sanitizeUserText,validateProjectInput } from "@/lib/project-input";
 import { demoProjectList } from "@/lib/demo-mode";
 import { authErrorResponse,requireUser } from "@/lib/auth";
-import { createProjectWithinLimit } from "@/lib/usage-limits";
 
 export async function GET(request:Request) {
   const benchmarks=demoProjectList();
   if(!request.headers.get("authorization"))return Response.json(benchmarks);
   try{
+    const {prisma}=await import("@/lib/prisma");
     const {userId}=await requireUser(request);
     const projects=await prisma.project.findMany({where:{ownerId:userId},orderBy:{updatedAt:"desc"},include:{_count:{select:{research:true,insights:true}},brief:{select:{id:true}}}});
     return Response.json([...projects.map(item=>({...item,readOnly:false})),...benchmarks]);
@@ -16,6 +15,7 @@ export async function GET(request:Request) {
 
 export async function POST(request:Request) {
   try {
+    const {createProjectWithinLimit}=await import("@/lib/usage-limits");
     const {userId}=await requireUser(request);
     const body=await request.json();const validationError=validateProjectInput(body);if(validationError)return Response.json({error:validationError},{status:400});
     const project=await createProjectWithinLimit({ownerId:userId,name:sanitizeUserText(body.name),brandName:sanitizeUserText(body.brandName),category:sanitizeUserText(body.category),targetMarket:sanitizeUserText(body.targetMarket),competitors:sanitizeUserText(String(body.competitors||"")),researchObjective:sanitizeUserText(body.researchObjective)});
