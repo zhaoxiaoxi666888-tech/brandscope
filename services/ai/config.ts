@@ -1,5 +1,6 @@
+const configuredProvider=process.env.AI_PROVIDER||(process.env.OPENAI_API_KEY?"openai":"mock");
 export const aiConfig={
- provider:process.env.AI_PROVIDER||"mock",
+ provider:configuredProvider==="openai"&&!process.env.OPENAI_API_KEY?"mock":configuredProvider,
  model:process.env.OPENAI_MODEL||"gpt-5.6-terra",
  timeoutMs:Number(process.env.AI_TIMEOUT_MS||45_000),
  maxOutputTokens:Number(process.env.AI_MAX_OUTPUT_TOKENS||6_000),

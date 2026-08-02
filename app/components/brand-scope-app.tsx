@@ -188,31 +188,33 @@ function Projects() {
 function CreateProject() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [generationStep,setGenerationStep]=useState("");
   const [prefill, setPrefill] = useState({ brandName: "", targetMarket: "" });
-  const[quota,setQuota]=useState<{remainingAiCalls:number;dailyAiCallLimit:number}|null>(null);
+  const[quota,setQuota]=useState<{remainingAiCalls:number|null;dailyAiCallLimit:number;degraded?:boolean}|null>(null);
   useEffect(() => { const query = new URLSearchParams(window.location.search); setPrefill({ brandName: query.get("brandName") || "", targetMarket: query.get("targetMarket") || "" });void apiFetch("/api/quota").then(response=>response.json()).then(setQuota).catch(()=>{}); }, []);
   async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); setBusy(true); setError("");
-    const values=Object.fromEntries(new FormData(event.currentTarget));const urls=String(values.evidenceUrls||"").split(/\n/).map(item=>item.trim()).filter(Boolean);delete values.evidenceUrls;
-    if(urls.length>8){setError("单个项目最多提交 8 个 Evidence URL。");setBusy(false);return;}
-    const response = await apiFetch("/api/projects", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(values) });
-    const result = await response.json();
-    if (!response.ok) { if(response.status===401)window.location.href=`/login?next=${encodeURIComponent(window.location.href)}`;setError(result.error || "创建失败。"); setBusy(false); return; }
-    for(const url of urls){const evidence=await apiFetch(`/api/projects/${result.id}/evidence`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({url})});if(!evidence.ok){setError((await evidence.json()).error||"部分网页资料读取失败。");setBusy(false);return;}}
-    window.location.href = `/projects/${result.id}/evidence`;
+    event.preventDefault();setBusy(true);setError("");setGenerationStep("正在创建项目…");
+    const values=Object.fromEntries(new FormData(event.currentTarget));const brandName=String(values.brandName||"").trim();const website=String(values.website||"").trim();
+    const projectInput={name:`${brandName} 品牌研究`,brandName,category:"品牌与产品",targetMarket:"全球市场",competitors:"",researchObjective:`识别 ${brandName} 的目标用户、市场信号、竞争位置与可执行的品牌营销方向。`};
+    try{
+      const response=await apiFetch("/api/projects",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(projectInput)});const result=await response.json();
+      if(!response.ok){if(response.status===401){window.location.href=`/login?next=${encodeURIComponent(window.location.href)}`;return;}throw new Error(result.error||"创建项目失败。");}
+      const run=async(path:string,label:string,body?:Record<string,unknown>)=>{setGenerationStep(label);const next=await apiFetch(path,{method:"POST",headers:body?{"content-type":"application/json"}:undefined,body:body?JSON.stringify(body):undefined});if(!next.ok){const payload=await next.json().catch(()=>({}));throw new Error(payload.error||`${label}失败，请重试。`);}return next;};
+      await run(`/api/projects/${result.id}/evidence`,"正在整理公开资料…",website?{url:website}:{discover:true});
+      await run(`/api/projects/${result.id}/research`,"正在生成品牌研究…");
+      await run(`/api/projects/${result.id}/insights`,"正在提炼核心洞察…",{autoConfirm:true});
+      await run(`/api/projects/${result.id}/brief`,"正在生成品牌营销简报…");
+      window.location.href=`/projects/${result.id}/brief`;
+    }catch(cause){setError(cause instanceof Error?cause.message:"生成失败，请稍后重试。");setBusy(false);setGenerationStep("");}
   }
   return <main className="app-page"><TopBar/><section className="form-shell">
-    <div className="form-intro"><span className="section-label">创建项目</span><h1>定义一个清晰的市场问题。</h1><p>输入研究所需的最少信息，之后仍然可以继续修改。</p><div className="steps"><span className="active">01 创建项目</span><span>02 品牌研究</span><span>03 核心洞察</span><span>04 品牌营销简报</span></div></div>
+    <div className="form-intro"><span className="section-label">一键生成</span><h1>输入品牌，生成完整研究。</h1><p>系统会自动完成资料整理、品牌研究、核心洞察和品牌营销简报。</p><div className="steps"><span className="active">01 Evidence</span><span>02 Research</span><span>03 Insights</span><span>04 Brief</span></div></div>
     <form className="project-form" onSubmit={submit}>
-      <label>项目名称 *<input name="name" required maxLength={120} autoFocus placeholder="例如：Aurora 美国市场进入研究"/></label>
-      <label>品牌名称 *<input name="brandName" required maxLength={100} value={prefill.brandName} onChange={event => setPrefill({ ...prefill, brandName: event.target.value })} placeholder="例如：Aurora Skin"/></label>
-      <div className="field-pair"><label>产品类别 *<input name="category" required maxLength={100} placeholder="例如：护肤品"/></label><label>目标市场 *<input name="targetMarket" required maxLength={100} value={prefill.targetMarket} onChange={event => setPrefill({ ...prefill, targetMarket: event.target.value })} placeholder="例如：美国"/></label></div>
-      <label>主要竞品<input name="competitors" maxLength={500} placeholder="用逗号分隔"/><small>建议填写 2–5 个用户真正会比较的品牌。</small></label>
-      <label>研究目标 *<textarea name="researchObjective" required maxLength={1200} rows={4} placeholder="这次研究需要帮助你做出什么决定？"/></label>
-      <label>Evidence URL<textarea name="evidenceUrls" rows={5} placeholder={"每行一个公开网页 URL，最多 8 个\nhttps://example.com/article"}/><small>仅支持公开 HTTP/HTTPS 网页；系统会阻止本机、内网和危险重定向。</small></label>
-      <div className="usage-notice"><strong>公开体验额度</strong><p>每位用户每天最多创建 2 个项目；每个项目仅可生成 1 次 Research、1 次 Insights 和 1 次 Brief。</p><p>{quota?`今日全站还可发起约 ${quota.remainingAiCalls}/${quota.dailyAiCallLimit} 次 AI 生成。`:"正在读取今日公开额度…"}</p><small>AI 可能产生错误或推断，请在用于工作前核验原始来源。额度用完后不会回退为模拟结果。</small></div>
+      <label>品牌名称 *<input name="brandName" required maxLength={100} autoFocus value={prefill.brandName} onChange={event => setPrefill({ ...prefill, brandName: event.target.value })} placeholder="例如：Aurora Skin"/></label>
+      <label>品牌官网（可选）<input name="website" type="url" placeholder="https://example.com"/><small>未填写时，系统会自动发现公开资料；填写官网可提高资料相关性。</small></label>
+      <div className="usage-notice"><strong>公开体验额度</strong><p>每位用户每天最多创建 2 个项目；每个项目仅可生成 1 次 Research、1 次 Insights 和 1 次 Brief。</p><p>{quota?(quota.degraded?"额度服务暂不可用，请稍后再试。":quota.remainingAiCalls===null?`今日全站 AI 生成上限 ${quota.dailyAiCallLimit} 次。`:`今日全站还可发起约 ${quota.remainingAiCalls}/${quota.dailyAiCallLimit} 次 AI 生成。`):"正在读取今日公开额度…"}</p><small>AI 可能产生错误或推断，请在用于工作前核验原始来源。额度用完后不会回退为模拟结果。</small></div>
       {error && <p className="form-error" role="alert">{error}</p>}
-      <div className="form-actions"><Link href="/projects">取消</Link><button className="button dark" disabled={busy}>{busy ? "正在创建…" : "创建并开始研究 →"}</button></div>
+      <div className="form-actions"><Link href="/projects">取消</Link><button className="button dark" disabled={busy}>{busy ? generationStep||"正在生成…" : "Generate BrandScope →"}</button></div>
     </form>
   </section></main>;
 }

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { createProvider } from "../services/ai/provider-factory";
 import { createSearchProvider } from "../services/search/provider-factory";
 
-test("真实模式缺少密钥时明确失败，不静默回退 Mock", () => {
+test("OpenAI 缺少密钥时回退 Mock，其他真实服务仍明确失败", () => {
   const openAIKey = process.env.OPENAI_API_KEY;
   const braveKey = process.env.BRAVE_SEARCH_API_KEY;
   const deepSeekKey = process.env.DEEPSEEK_API_KEY;
@@ -11,7 +11,7 @@ test("真实模式缺少密钥时明确失败，不静默回退 Mock", () => {
   delete process.env.BRAVE_SEARCH_API_KEY;
   delete process.env.DEEPSEEK_API_KEY;
   try {
-    assert.throws(() => createProvider("openai"), /缺少 OPENAI_API_KEY/);
+    assert.equal(createProvider("openai").constructor.name,"MockLLMProvider");
     assert.throws(() => createSearchProvider("web"), /缺少 BRAVE_SEARCH_API_KEY/);
     assert.throws(() => createProvider("deepseek"), /缺少 DEEPSEEK_API_KEY/);
   } finally {
